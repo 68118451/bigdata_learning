@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>flink1.14.6</module>
+        <module>flink-commen</module>
     </modules>
 
     <properties>
