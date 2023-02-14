@@ -1,6 +1,5 @@
-package com.flink.scala.conf
+package com.flink.conf
 
-import com.flink.conf.CommonConf
 
 class AppConf extends CommonConf  {
 

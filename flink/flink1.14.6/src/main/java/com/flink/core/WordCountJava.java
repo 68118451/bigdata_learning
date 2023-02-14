@@ -1,4 +1,4 @@
-package com.flink.java.core;
+package com.flink.core;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -6,7 +6,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.util.Collector;
 
-public class WordCount {
+public class WordCountJava {
 
 
     public static void main(String[] args) throws Exception {
