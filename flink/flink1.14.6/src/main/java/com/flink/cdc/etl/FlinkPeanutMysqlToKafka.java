@@ -1,11 +1,14 @@
-package com.flink.cdc.etl.maybe;
+package com.flink.cdc.etl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.flink.cdc.conf.AppConf;
-import com.flink.cdc.deserializer.MongoToKafkaDeserializer;
-import com.ververica.cdc.connectors.mongodb.MongoDBSource;
+import com.flink.cdc.deserializer.MysqlToKafkaDeserializer;
+import com.ververica.cdc.connectors.mysql.source.MySqlSource;
+import com.ververica.cdc.connectors.mysql.table.StartupOptions;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
@@ -13,41 +16,35 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.connectors.kafka.partitioner.FlinkKafkaPartitioner;
 import org.apache.kafka.clients.producer.ProducerConfig;
+
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
- * flink cdc 实现同一mongo数据源写入kafka topic供下游使用,下游消费kafka类型debezium-json
+ * flink cdc 实现同一mysql数据源写入kafka topic供下游使用,下游消费kafka类型debezium-json
  * 作者：
  * 日期：2022/12/20 下午5:21
- *
- *
- *
- * cdc2.3.0已知问题：
- * 1、目前发现mongo cdc集群配置主节点会出现丢数据现象(数据量比较大的情况下)
- *    任务checkpoint重启后又可以重新消费到，可能和mongo集群配置有关
- *    因此cdc配置mongo的hosts为从节点或者
- * 2、使用MongoDBSource时，当集合改名或者删除时会报错
  */
+public class FlinkPeanutMysqlToKafka {
 
-public class FlinkMaybeMongoToKafka {
-
-    private static final String KAFKA_PRODUCER_MONGO_CDC_TOPIC = "maybe_mongo_to_kafka";
+    private static final String KAFKA_PRODUCER_MYSQL_CDC_TOPIC = "peanut_mysql_to_kafka";
     private static final String KAFKA_BOOTSTRAP_SERVERS = "node2.kafka.bigdata.hw.com:9092,node5.kafka.bigdata.hw.com:9092,node6.kafka.bigdata.hw.com:9092";
-
 
     public static void main(String[] args) throws Exception {
 
         AppConf appConf = new AppConf();
-        //1.构建flink环境及配置checkpoint
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        //1.获取执行环境
+        Configuration configuration = new Configuration();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
+        env.setParallelism(1);
 
+
+        //1.1 设置 CK&状态后端
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 10000));
-        env.enableCheckpointing(TimeUnit.MINUTES.toMillis(3));
+        env.enableCheckpointing(TimeUnit.MINUTES.toMillis(5));
         env.setParallelism(1);
         CheckpointConfig checkpointConf = env.getCheckpointConfig();
         checkpointConf.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
@@ -56,25 +53,29 @@ public class FlinkMaybeMongoToKafka {
         checkpointConf.setExternalizedCheckpointCleanup(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
 
-        //这里使用SourceFunction而不是最新的MongoDBSource(cdc2.3.0后的新方法,但是当集合改名或者删除时会报错)
-        SourceFunction<String> sourceFunction = MongoDBSource.<String>builder()
-                .hosts(appConf.getPeanutMongoHost())
-                .username(appConf.getMongoCdcUser())
-                .password(appConf.getMongoCdcPassword())
-                .copyExisting(false)
-                .databaseList("peanut") // set captured database, support regex
-                .deserializer(new MongoToKafkaDeserializer())
+
+        //2.通过 FlinkCDC 构建 SourceFunction 并读取数据
+        MySqlSource<String> mySqlSource = MySqlSource.<String>builder()
+                .hostname(appConf.getPeanutMysqlJdbcUrl())
+                .port(3306)
+                .databaseList("wormhole_peanut")  //多库同步
+                .tableList("wormhole_peanut.*") //多表同步
+                .username(appConf.getAzkabanMysqlUserName())
+                .password(appConf.getAzkabanMysqlPassword())
+                .deserializer(new MysqlToKafkaDeserializer()) //这里需要自定义序列化格式
+                .startupOptions(StartupOptions.latest())    //从最新binlog读取，增量方式
+//                .serverId("5401-5404")   //需大于并行度
+//                .includeSchemaChanges(true) //获取DDL事件
                 .build();
 
 
-        DataStreamSource<String> streamSource = env.addSource(sourceFunction);
+        DataStreamSource<String> streamSource = env.fromSource(mySqlSource, WatermarkStrategy.noWatermarks(), "MySQL Source");
+
+        //sink
+        streamSource.sinkTo(getKafkaProducer(KAFKA_BOOTSTRAP_SERVERS, KAFKA_PRODUCER_MYSQL_CDC_TOPIC, "key"));
 
 
-
-        streamSource.sinkTo(getKafkaProducer(KAFKA_BOOTSTRAP_SERVERS, KAFKA_PRODUCER_MONGO_CDC_TOPIC, "key"));
-
-        env.execute("flink-maybe-mongo-to-kafka");
-
+        env.execute("flink-peanut-mysql-to-kafka");
 
     }
 
@@ -117,4 +118,5 @@ public class FlinkMaybeMongoToKafka {
 
 
     }
+
 }

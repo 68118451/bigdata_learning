@@ -1,4 +1,4 @@
-package com.flink.cdc.etl.peanut;
+package com.flink.cdc.etl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.flink.cdc.conf.AppConf;
@@ -25,6 +25,20 @@ import java.util.concurrent.TimeUnit;
  * flink cdc 实现同一mongo数据源写入kafka topic供下游使用,下游消费kafka类型debezium-json
  * 作者：
  * 日期：2022/12/20 下午5:21
+ *
+ *
+ *
+ * 本地运行注意事项：
+ *1、运行时需要把pom文件中provided的依赖也加入执行环境
+ *
+ *
+ *
+ *cdc2.3.0已知问题：
+ *1、目前发现mongo cdc集群配置主节点会出现丢数据现象(数据量比较大的情况下)
+ *   任务checkpoint重启后又可以重新消费到，可能和mongo集群配置有关
+ *   因此cdc配置mongo的hosts为从节点或者
+ *2、使用MongoDBSource时，当集合改名或者删除时会报错
+ *
  */
 
 public class FlinkPeanutMongoToKafka {
@@ -36,7 +50,7 @@ public class FlinkPeanutMongoToKafka {
     public static void main(String[] args) throws Exception {
 
         AppConf appConf = new AppConf();
-//        1.构建flink环境及配置checkpoint
+        //1.构建flink环境及配置checkpoint
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 10000));

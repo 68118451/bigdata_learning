@@ -1,4 +1,4 @@
-package com.flink.cdc.etl.peanut;
+package com.flink.cdc.etl;
 
 import com.flink.cdc.conf.AppConf;
 import com.flink.cdc.deserializer.MongoRecordDeserializer;
@@ -22,6 +22,10 @@ import java.util.concurrent.TimeUnit;
  * date: 2022-11-09 17:55 <br>
  * author: YQ <br>
  * version: 1.0 <br>
+ *
+ *
+ * 本地运行sink kudu表时需要确定kudu没有开启权限认证。
+ *
  */
 public class FlinkPeanutMongoCdcJob {
 
