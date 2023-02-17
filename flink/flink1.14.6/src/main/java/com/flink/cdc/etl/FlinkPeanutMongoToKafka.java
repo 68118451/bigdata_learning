@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  *
  * 本地运行注意事项：
  *1、运行时需要把pom文件中provided的依赖也加入执行环境
+ *2、使用单个集合时collectionList需要加上库名peanut.pn_statistic_log
  *
  *
  *
@@ -69,14 +70,15 @@ public class FlinkPeanutMongoToKafka {
                 .password(appConf.getMongoCdcPassword())
                 .copyExisting(false)
                 .databaseList("peanut") // set captured database, support regex
+                .collectionList("peanut.pn_statistic_log")
                 .deserializer(new MongoToKafkaDeserializer())
                 .build();
 
 
         DataStreamSource<String> streamSource = env.addSource(sourceFunction);
 
-
-        streamSource.sinkTo(getKafkaProducer(KAFKA_BOOTSTRAP_SERVERS, KAFKA_PRODUCER_MONGO_CDC_TOPIC, "key"));
+        streamSource.print();
+//        streamSource.sinkTo(getKafkaProducer(KAFKA_BOOTSTRAP_SERVERS, KAFKA_PRODUCER_MONGO_CDC_TOPIC, "key"));
 
         env.execute("flink-peanut-mongo-to-kafka");
 

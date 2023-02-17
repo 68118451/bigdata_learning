@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>flink</artifactId>
-        <groupId>org.example</groupId>
+        <groupId>org.example.bigdata-learning</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -26,8 +26,8 @@
     <dependencies>
         <!--依赖的公共包-->
         <dependency>
-            <groupId>org.example</groupId>
-            <artifactId>flink-commen</artifactId>
+            <groupId>org.example.bigdata-learning</groupId>
+            <artifactId>weli-flink-common</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>

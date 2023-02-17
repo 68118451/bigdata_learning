@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>bigdata_learning</artifactId>
-        <groupId>org.example</groupId>
+        <groupId>org.example.bigdata-learning</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>flink1.14.6</module>
-        <module>flink-commen</module>
+        <module>weli-flink-common</module>
     </modules>
 
     <properties>
