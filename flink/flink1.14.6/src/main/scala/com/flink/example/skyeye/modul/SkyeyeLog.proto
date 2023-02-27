@@ -1,0 +1,56 @@
+option java_package = "com.flink.example.skyeye.modul";
+option java_outer_classname = "SkyeyeLog";
+
+//  protoc --java_out=./flink/flink1.14.6/src/main/scala/   ./flink/flink1.14.6/src/main/scala/com/flink/example/skyeye/modul/SkyeyeLog.proto
+
+message Entity {
+  // 事件唯一标识，uuid
+  required string eventId = 1;
+  // app标识
+  required string appKey = 2;
+  // 日志级别
+  required string level = 3;
+  // 业务模块-这里放在了args里面
+  optional string module = 4;
+  // 日志标题
+  optional string title = 5;
+  // 日志内容
+  optional string content = 6;
+  // 应用版本
+  optional string appVersion = 7;
+
+  // 应用版本的code 对应 getAppVersionCode 表中是 version_code
+  optional int32 appVerCode = 8;
+  // 采集sdk的版本
+  optional string sdkVersion = 9;
+  // 系统
+  optional string os = 10;
+  // 系统版本
+  optional string osVersion = 11;
+  // 手机分辨率 - 对应custom的Resolution
+  optional string r = 12;
+  // 设备的网络环境
+  optional string network = 13;
+
+  // 运营 商中国移动,中国联通,中国电信   对应 custom表的serviceProvider，kudu表也是sp
+  optional string sp = 14;
+  // 城市
+  optional string city = 15;
+  // 应用发布渠道
+  optional string  channel = 16;
+  // 应用包名 custom里面没有，event_v3里面有
+  optional string  pkg = 17;
+  optional string  imei = 18;
+  optional string  oaid = 19;
+  optional string  df_id = 20;
+  optional string  idfa = 21;
+  // 随身云uid - v2版本是int63 v3版本是string，这里定为string
+  optional string  uid = 22;
+  // 事件时间
+  optional int64 eventTime = 23;
+
+  optional string deviceId = 24;
+
+  // 设备模型,Android的Build.model ro.product.model
+  optional string model = 25;
+}
